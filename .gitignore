@@ -13,3 +13,5 @@ __pycache__/
 
 # Optional: log files
 *.log
+# Recorded API responses stay local until reviewed by hand
+tests/fixtures/recorded/

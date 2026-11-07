@@ -3,7 +3,7 @@
 import json
 from copy import deepcopy
 from pathlib import Path
-from typing import IO, Union, List
+from typing import IO, Any, Dict, List, Literal, Optional, Union, overload
 from collections import defaultdict, deque
 import time, logging, re
 from itertools import tee
@@ -766,15 +766,49 @@ class CJA:
         res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
         return res
 
+    @overload
     def getDimensions(
         self,
-        dataviewId: str = None,
+        dataviewId: Optional[str] = None,
         full: bool = False,
-        inclType: str = None,
+        inclType: Optional[str] = None,
+        verbose: bool = False,
+        output: Literal["df"] = "df",
+        **kwargs: Any,
+    ) -> pd.DataFrame: ...
+
+    @overload
+    def getDimensions(
+        self,
+        dataviewId: Optional[str] = None,
+        full: bool = False,
+        inclType: Optional[str] = None,
+        verbose: bool = False,
+        *,
+        output: Literal["raw"],
+        **kwargs: Any,
+    ) -> List[Dict[str, Any]]: ...
+
+    @overload
+    def getDimensions(
+        self,
+        dataviewId: Optional[str] = None,
+        full: bool = False,
+        inclType: Optional[str] = None,
         verbose: bool = False,
         output: str = "df",
-        **kwargs
-    ) -> dict:
+        **kwargs: Any,
+    ) -> JsonListOrDataFrameType: ...
+
+    def getDimensions(
+        self,
+        dataviewId: Optional[str] = None,
+        full: bool = False,
+        inclType: Optional[str] = None,
+        verbose: bool = False,
+        output: str = "df",
+        **kwargs: Any,
+    ) -> JsonListOrDataFrameType:
         """
         Used to retrieve dimensions for a dataview
         Arguments:
@@ -788,7 +822,7 @@ class CJA:
         if self.loggingEnabled:
             self.logger.debug(f"getDimensions start")
         path = f"/data/dataviews/{dataviewId}/dimensions"
-        params = {"page":0}
+        params: Dict[str, Any] = {"page":0}
         if full:
             params[
                 "expansion"
@@ -886,11 +920,12 @@ class CJA:
 
     
     def getDimension(
-        self, dataviewId: str = None, 
-        dimensionId: str = None, 
+        self,
+        dataviewId: Optional[str] = None,
+        dimensionId: Optional[str] = None,
         full: bool = True,
-        **kwargs
-    ):
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
         """
         Return a specific dimension based on the dataview ID and dimension ID passed.
         Arguments:
@@ -905,7 +940,7 @@ class CJA:
         if self.loggingEnabled:
             self.logger.debug(f"getDimension start, id: {dimensionId}")
         path = f"/data/dataviews/{dataviewId}/dimensions/{dimensionId}"
-        params = {}
+        params: Dict[str, Any] = {}
         if full:
             params[
                 "expansion"
@@ -913,15 +948,49 @@ class CJA:
         res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
         return res
 
+    @overload
     def getMetrics(
         self,
-        dataviewId: str = None,
+        dataviewId: Optional[str] = None,
         full: bool = False,
-        inclType: str = None,
+        inclType: Optional[str] = None,
         verbose: bool = False,
-                output: str = "df",
-        **kwargs
-    ) -> dict:
+        output: Literal["df"] = "df",
+        **kwargs: Any,
+    ) -> pd.DataFrame: ...
+
+    @overload
+    def getMetrics(
+        self,
+        dataviewId: Optional[str] = None,
+        full: bool = False,
+        inclType: Optional[str] = None,
+        verbose: bool = False,
+        *,
+        output: Literal["raw"],
+        **kwargs: Any,
+    ) -> List[Dict[str, Any]]: ...
+
+    @overload
+    def getMetrics(
+        self,
+        dataviewId: Optional[str] = None,
+        full: bool = False,
+        inclType: Optional[str] = None,
+        verbose: bool = False,
+        output: str = "df",
+        **kwargs: Any,
+    ) -> JsonListOrDataFrameType: ...
+
+    def getMetrics(
+        self,
+        dataviewId: Optional[str] = None,
+        full: bool = False,
+        inclType: Optional[str] = None,
+        verbose: bool = False,
+        output: str = "df",
+        **kwargs: Any,
+    ) -> JsonListOrDataFrameType:
         """
         Used to retrieve metrics for a dataview
         Arguments:
@@ -935,7 +1004,7 @@ class CJA:
         if self.loggingEnabled:
             self.logger.debug(f"getMetrics start")
         path = f"/data/dataviews/{dataviewId}/metrics"
-        params = {"page":0}
+        params: Dict[str, Any] = {"page":0}
         if full:
             params[
                 "expansion"
@@ -960,8 +1029,12 @@ class CJA:
         return metrics
 
     def getMetric(
-        self, dataviewId: str = None, metricId: str = None, full: bool = True, **kwargs
-    ):
+        self,
+        dataviewId: Optional[str] = None,
+        metricId: Optional[str] = None,
+        full: bool = True,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
         """
         Return a specific metric based on the dataview ID and dimension ID passed.
         Arguments:
@@ -976,7 +1049,7 @@ class CJA:
         if self.loggingEnabled:
             self.logger.debug(f"getMetric start, id: {metricId}")
         path = f"/data/dataviews/{dataviewId}/metrics/{metricId}"
-        params = {}
+        params: Dict[str, Any] = {}
         if full:
             params[
                 "expansion"
@@ -984,18 +1057,64 @@ class CJA:
         res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
         return res
 
+    @overload
+    def getDataViews(
+        self,
+        limit: int = 100,
+        full: bool = True,
+        output: Literal["df"] = "df",
+        parentDataGroupId: Optional[str] = None,
+        externalIds: Optional[str] = None,
+        externalParentIds: Optional[str] = None,
+        includeType: str = "all",
+        cached: bool = True,
+        verbose: bool = False,
+        **kwargs: Any,
+    ) -> pd.DataFrame: ...
+
+    @overload
+    def getDataViews(
+        self,
+        limit: int = 100,
+        full: bool = True,
+        *,
+        output: Literal["raw"],
+        parentDataGroupId: Optional[str] = None,
+        externalIds: Optional[str] = None,
+        externalParentIds: Optional[str] = None,
+        includeType: str = "all",
+        cached: bool = True,
+        verbose: bool = False,
+        **kwargs: Any,
+    ) -> List[Dict[str, Any]]: ...
+
+    @overload
     def getDataViews(
         self,
         limit: int = 100,
         full: bool = True,
         output: str = "df",
-        parentDataGroupId: str = None,
-        externalIds: str = None,
-        externalParentIds: str = None,
+        parentDataGroupId: Optional[str] = None,
+        externalIds: Optional[str] = None,
+        externalParentIds: Optional[str] = None,
         includeType: str = "all",
         cached: bool = True,
         verbose: bool = False,
-        **kwargs,
+        **kwargs: Any,
+    ) -> JsonListOrDataFrameType: ...
+
+    def getDataViews(
+        self,
+        limit: int = 100,
+        full: bool = True,
+        output: str = "df",
+        parentDataGroupId: Optional[str] = None,
+        externalIds: Optional[str] = None,
+        externalParentIds: Optional[str] = None,
+        includeType: str = "all",
+        cached: bool = True,
+        verbose: bool = False,
+        **kwargs: Any,
     ) -> JsonListOrDataFrameType:
         """
         Returns the Data View configuration.
@@ -1014,7 +1133,7 @@ class CJA:
         if self.loggingEnabled:
             self.logger.debug(f"getDataViews start, output: {output}")
         path = "/data/dataviews"
-        params = {
+        params: Dict[str, Any] = {
             "limit": limit,
             "includeType": includeType,
             "cached": cached,
@@ -1046,8 +1165,12 @@ class CJA:
         return data
 
     def getDataView(
-        self, dataViewId: str = None, full: bool = True, save: bool = False, **kwargs
-    ) -> dict:
+        self,
+        dataViewId: Optional[str] = None,
+        full: bool = True,
+        save: bool = False,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
         """
         Returns a specific Data View configuration from Configuration ID.
         Arguments:
@@ -1060,7 +1183,7 @@ class CJA:
         if self.loggingEnabled:
             self.logger.debug(f"getDataView start")
         path = f"/data/dataviews/{dataViewId}"
-        params = {}
+        params: Dict[str, Any] = {}
         if full:
             params[
                 "expansion"

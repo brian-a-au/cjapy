@@ -1,0 +1,4 @@
+-e .
+mypy>=1.10
+pandas-stubs
+typing_extensions

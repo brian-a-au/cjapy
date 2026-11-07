@@ -96,3 +96,27 @@ def test_get_metric_requires_metric_id(make_cja):
 
     with pytest.raises(ValueError, match="Require a Metric ID"):
         cja.getMetric("dv_1")
+
+
+@pytest.mark.parametrize(
+    "method, kind", [("getMetrics", "metrics"), ("getDimensions", "dimensions")]
+)
+@pytest.mark.parametrize("full", [False, True])
+def test_expansion_replaces_full_on_every_page(make_cja, method, kind, full):
+    cja = make_cja({"/dataviews/dv_1/" + kind: two_pages(kind[0])})
+
+    getattr(cja, method)("dv_1", full=full, inclType="hidden", expansion="name,description")
+
+    assert [params for _, params in cja.connector.calls] == [
+        {"page": 0, "expansion": "name,description", "includeType": "hidden"},
+        {"page": 1, "expansion": "name,description", "includeType": "hidden"},
+    ]
+
+
+def test_get_data_views_expansion_replaces_full(make_cja):
+    cja = make_cja({"/dataviews": [{"content": [{"id": "dv_1"}], "last": True}]})
+
+    cja.getDataViews(expansion="name,owner")
+
+    (_, params), = cja.connector.calls
+    assert params["expansion"] == "name,owner"

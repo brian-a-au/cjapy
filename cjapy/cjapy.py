@@ -774,6 +774,7 @@ class CJA:
         inclType: Optional[str] = None,
         verbose: bool = False,
         output: Literal["df"] = "df",
+        expansion: Optional[str] = None,
         **kwargs: Any,
     ) -> pd.DataFrame: ...
 
@@ -786,6 +787,7 @@ class CJA:
         verbose: bool = False,
         *,
         output: Literal["raw"],
+        expansion: Optional[str] = None,
         **kwargs: Any,
     ) -> List[Dict[str, Any]]: ...
 
@@ -797,6 +799,7 @@ class CJA:
         inclType: Optional[str] = None,
         verbose: bool = False,
         output: str = "df",
+        expansion: Optional[str] = None,
         **kwargs: Any,
     ) -> JsonListOrDataFrameType: ...
 
@@ -807,6 +810,7 @@ class CJA:
         inclType: Optional[str] = None,
         verbose: bool = False,
         output: str = "df",
+        expansion: Optional[str] = None,
         **kwargs: Any,
     ) -> JsonListOrDataFrameType:
         """
@@ -816,6 +820,7 @@ class CJA:
             full : OPTIONAL : To add additional elements (default False)
             inclType : OPTIONAL : Possibility to add "hidden" values
             output : OPTIONAL : Type of output selected, either "df" (default) or "raw"
+            expansion : OPTIONAL : Comma-separated fields to request. When set, it replaces the fields that full=True requests.
         """
         if dataviewId is None:
             raise ValueError("Require a Data View ID")
@@ -829,6 +834,8 @@ class CJA:
             ] = "approved,favorite,tags,usageSummary,usageSummaryWithRelevancyScore,description,sourceFieldId,segmentable,required,hideFromReporting,hidden,includeExcludeSetting,fieldDefinition,bucketingSetting,noValueOptionsSetting,defaultDimensionSort,persistenceSetting,storageId,tableName,dataSetIds,dataSetType,type,schemaPath,hasData,sourceFieldName,schemaType,sourceFieldType,fromGlobalLookup,multiValued,precision"
         if inclType == "hidden":
             params["includeType"] = "hidden"
+        if expansion is not None:
+            params["expansion"] = expansion
         res = self.connector.getData(
             self.endpoint + path, params=params, verbose=verbose, **kwargs
         )
@@ -956,6 +963,7 @@ class CJA:
         inclType: Optional[str] = None,
         verbose: bool = False,
         output: Literal["df"] = "df",
+        expansion: Optional[str] = None,
         **kwargs: Any,
     ) -> pd.DataFrame: ...
 
@@ -968,6 +976,7 @@ class CJA:
         verbose: bool = False,
         *,
         output: Literal["raw"],
+        expansion: Optional[str] = None,
         **kwargs: Any,
     ) -> List[Dict[str, Any]]: ...
 
@@ -979,6 +988,7 @@ class CJA:
         inclType: Optional[str] = None,
         verbose: bool = False,
         output: str = "df",
+        expansion: Optional[str] = None,
         **kwargs: Any,
     ) -> JsonListOrDataFrameType: ...
 
@@ -989,6 +999,7 @@ class CJA:
         inclType: Optional[str] = None,
         verbose: bool = False,
         output: str = "df",
+        expansion: Optional[str] = None,
         **kwargs: Any,
     ) -> JsonListOrDataFrameType:
         """
@@ -998,6 +1009,7 @@ class CJA:
             full : OPTIONAL : To add additional elements (default False)
             inclType : OPTIONAL : Possibility to add "hidden" values
             output : OPTIONAL : Type of output selected, either "df" (default) or "raw"
+            expansion : OPTIONAL : Comma-separated fields to request. When set, it replaces the fields that full=True requests.
         """
         if dataviewId is None:
             raise ValueError("Require a Data View ID")
@@ -1011,6 +1023,8 @@ class CJA:
             ] = "approved,favorite,tags,usageSummary,usageSummaryWithRelevancyScore,description,sourceFieldId,segmentable,required,hideFromReporting,hidden,includeExcludeSetting,fieldDefinition,storageId,tableName,dataSetIds,dataSetType,type,schemaPath,hasData,sourceFieldName,schemaType,sourceFieldType,fromGlobalLookup,multiValued,precision"
         if inclType == "hidden":
             params["includeType"] = "hidden"
+        if expansion is not None:
+            params["expansion"] = expansion
         res = self.connector.getData(
             self.endpoint + path, params=params, verbose=verbose, **kwargs
         )
@@ -1069,6 +1083,7 @@ class CJA:
         includeType: str = "all",
         cached: bool = True,
         verbose: bool = False,
+        expansion: Optional[str] = None,
         **kwargs: Any,
     ) -> pd.DataFrame: ...
 
@@ -1085,6 +1100,7 @@ class CJA:
         includeType: str = "all",
         cached: bool = True,
         verbose: bool = False,
+        expansion: Optional[str] = None,
         **kwargs: Any,
     ) -> List[Dict[str, Any]]: ...
 
@@ -1100,6 +1116,7 @@ class CJA:
         includeType: str = "all",
         cached: bool = True,
         verbose: bool = False,
+        expansion: Optional[str] = None,
         **kwargs: Any,
     ) -> JsonListOrDataFrameType: ...
 
@@ -1114,6 +1131,7 @@ class CJA:
         includeType: str = "all",
         cached: bool = True,
         verbose: bool = False,
+        expansion: Optional[str] = None,
         **kwargs: Any,
     ) -> JsonListOrDataFrameType:
         """
@@ -1122,6 +1140,7 @@ class CJA:
             limit : OPTIONAL : number of results per request (default 100)
             full : OPTIONAL : define if all possible information are returned (default True).
             output : OPTIONAL : Type of output selected, either "df" (default) or "raw"
+            expansion : OPTIONAL : Comma-separated fields to request. When set, it replaces the fields that full=True requests.
             parentDataGroupId : OPTIONAL : Filters data views by a single parentDataGroupId
             externalIds : OPTIONAL : Comma-delimited list of external ids to limit the response with.
             externalParentIds : OPTIONAL : Comma-delimited list of external parent ids to limit the response with.
@@ -1147,6 +1166,8 @@ class CJA:
             params["externalIds"] = externalIds
         if externalParentIds:
             params["externalParentIds"] = externalParentIds
+        if expansion is not None:
+            params["expansion"] = expansion
         res = self.connector.getData(
             self.endpoint + path, params=params, verbose=verbose, **kwargs
         )

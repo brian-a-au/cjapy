@@ -35,6 +35,7 @@ class CJA:
         self,
         config_object: Union[ConfigObj, dict, None] = None,
         loggingObject: dict = None,
+        raise_on_error: bool = False,
     ) -> None:
         """
         Instantiate the class with the information provided.
@@ -47,6 +48,8 @@ class CJA:
                 - ``None`` (default): uses the global config set by :func:`~cjapy.configure` or
                   :func:`~cjapy.importConfigFile`.
             loggingObject : OPTIONAL : If you want to set logging capability for your actions.
+            raise_on_error : OPTIONAL : If True, raise cjapy.CJAAPIError when the API returns an
+                HTTP error status, instead of returning the error body. Default False.
         """
         if isinstance(config_object, ConfigObj):
             _config_object = config_object.config_object
@@ -77,6 +80,7 @@ class CJA:
             header=_header,
             loggingEnabled=self.loggingEnabled,
             logger=self.logger,
+            raise_on_error=raise_on_error,
         )
         self.header = self.connector.header
         self.endpoint = config.endpoints["global"]

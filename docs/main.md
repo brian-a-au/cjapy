@@ -109,6 +109,29 @@ Once you have imported the configuration of your application, you can directly c
 The `CJA` class established the connection to the CJA API and provides the different methods that you can use.\
 You can have more information on the class methods by going to this [documentation](./cja.md)
 
+#### Handling API errors
+
+By default, when the API returns an error, cjapy returns the error body as a dict, e.g. `{"errorCode": "not_found", "message": "..."}`. A method that reads several pages can then return only part of the results without telling you.
+
+If you pass `raise_on_error=True`, cjapy raises `cjapy.CJAAPIError` instead. cjapy raises it when a request ends with an HTTP status of 400 or above, after any automatic retries.
+
+```python
+import cjapy
+
+cja = cjapy.CJA(raise_on_error=True)
+try:
+    metrics = cja.getMetrics("dv_123")
+except cjapy.CJAAPIError as error:
+    print(error.status_code, error.payload)
+```
+
+The exception has these attributes:
+
+* `status_code` : the HTTP status of the final response.
+* `method` : the HTTP method, e.g. `GET`.
+* `url` : the full request URL.
+* `payload` : the parsed JSON body, or the text of the body when it is not JSON.
+
 ### generateLoggingObject
 
 The `cjapy` module provide a way to write logs of your methods.\

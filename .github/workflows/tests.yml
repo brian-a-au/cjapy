@@ -26,3 +26,20 @@ jobs:
         run: python -m pip install -r requirements-dev.txt
       - name: Run tests
         run: python -m pytest -q
+
+  typing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install type checking dependencies
+        run: python -m pip install -r requirements-typing.txt
+      # Checks the typed public signatures as callers see them. Errors inside
+      # cjapy's own modules are silenced until more of the package is typed.
+      - name: Check typed data view methods
+        run: python -m mypy --follow-imports=silent tests/typing

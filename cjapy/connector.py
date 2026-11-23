@@ -9,6 +9,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from cjapy import config
+from cjapy.errors import CJAAPIError
 
 
 def normalize_proxy(proxy: str | dict[str, str] | None) -> Optional[dict[str, str]]:
@@ -38,6 +39,7 @@ class AdobeRequest:
         loggingEnabled: bool = False,
         logger: object = None,
         proxy: str | dict[str, str] | None = None,
+        raise_on_error: bool = False,
     ) -> None:
         """
         Set the connector to be used for handling request to AAM
@@ -50,6 +52,9 @@ class AdobeRequest:
             logger : OPTIONAL : instance of the logger created
             proxy : OPTIONAL : Proxy URL for both HTTP and HTTPS, or a per-protocol
                 mapping. Falls back to config_object["proxy"] when omitted.
+            raise_on_error : OPTIONAL : If True, raise CJAAPIError when a request returns an HTTP
+                error status (400 or above) after any retries. Default False, which returns the
+                error body as before.
         """
         if config_object["org_id"] == "":
             raise Exception(
@@ -64,6 +69,7 @@ class AdobeRequest:
         self.logger = logger
         self.restTime = 30
         self.retry = retry
+        self.raise_on_error = raise_on_error
         self.connectionType = 'oauthV2'
         if self.config["token"] == "" or time.time() > self.config["date_limit"]:
             self.connectionType = 'oauthV2'
@@ -135,6 +141,18 @@ class AdobeRequest:
             session.proxies.update(self.proxies)
         return session
 
+    def _raise_for_error(self, res: requests.Response) -> None:
+        """Raise CJAAPIError for an HTTP error status when raise_on_error is set."""
+        if not self.raise_on_error or res.status_code < 400:
+            return
+        try:
+            payload = res.json()
+        except ValueError:
+            payload = res.text
+        if self.loggingEnabled:
+            self.logger.error(f"{res.request.method} failed: {res.status_code}, {payload}")
+        raise CJAAPIError(res.status_code, res.request.method, res.request.url, payload)
+
     def _checkingDate(self) -> None:
         """
         Checking if the token is still valid
@@ -178,6 +196,7 @@ class AdobeRequest:
             self.logger.debug(f"header used: {json.dumps(dict(self.session.headers))}")
             self.logger.debug(f"status_code: {res.status_code}")
             self.logger.debug(f"parameters used: {json.dumps(params)}")
+        self._raise_for_error(res)
         try:
             res_json = res.json()
         except:
@@ -223,6 +242,7 @@ class AdobeRequest:
         if self.loggingEnabled:
             self.logger.debug(f"request_URL : {res.request.url}")
             self.logger.debug(f"status_code: {res.status_code}")
+        self._raise_for_error(res)
         try:
             res_json = res.json()
         except:
@@ -266,6 +286,7 @@ class AdobeRequest:
         if self.loggingEnabled:
             self.logger.debug(f"request_URL : {res.request.url}")
             self.logger.debug(f"status_code: {res.status_code}")
+        self._raise_for_error(res)
         try:
             res_json = res.json()
         except:
@@ -303,6 +324,7 @@ class AdobeRequest:
         if self.loggingEnabled:
             self.logger.debug(f"request_URL : {res.request.url}")
             self.logger.debug(f"status_code: {res.status_code}")
+        self._raise_for_error(res)
         try:
             status_code = res.json()
         except:
@@ -322,6 +344,7 @@ class AdobeRequest:
             res = self.session.delete(endpoint, headers=headers)
         elif params is not None:
             res = self.session.delete(endpoint, params=params, headers=headers)
+        self._raise_for_error(res)
         try:
             status_code = res.status_code
         except:

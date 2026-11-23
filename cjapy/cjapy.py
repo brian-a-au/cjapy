@@ -38,6 +38,7 @@ class CJA:
         config_object: Union[ConfigObj, dict, None] = None,
         loggingObject: dict = None,
         proxy: str | dict[str, str] | None = None,
+        raise_on_error: bool = False,
     ) -> None:
         """
         Instantiate the class with the information provided.
@@ -52,6 +53,8 @@ class CJA:
             loggingObject : OPTIONAL : If you want to set logging capability for your actions.
             proxy : OPTIONAL : Proxy URL for both HTTP and HTTPS, or a per-protocol
                 mapping. A non-empty value overrides the proxy in the configuration.
+            raise_on_error : OPTIONAL : If True, raise cjapy.CJAAPIError when the API returns an
+                HTTP error status, instead of returning the error body. Default False.
         """
         if isinstance(config_object, ConfigObj):
             _config_object = config_object.config_object
@@ -83,6 +86,7 @@ class CJA:
             loggingEnabled=self.loggingEnabled,
             logger=self.logger,
             proxy=proxy,
+            raise_on_error=raise_on_error,
         )
         self.header = self.connector.header
         self.proxy = self.connector.proxies

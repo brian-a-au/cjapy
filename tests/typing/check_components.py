@@ -24,3 +24,5 @@ def check(cja: CJA, output: str) -> None:
     assert_type(cja.getMetrics("dv_1", full=True, output="raw"), List[Dict[str, Any]])
     assert_type(cja.getMetrics("dv_1", output=output), Union[pd.DataFrame, List[dict]])
     assert_type(cja.getMetric("dv_1", "metrics/visits"), Dict[str, Any])
+    assert_type(cja.getMetrics("dv_1", expansion="name", output="raw"), List[Dict[str, Any]])
+    assert_type(cja.getDataViews(expansion="name,owner"), pd.DataFrame)

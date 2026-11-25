@@ -45,3 +45,21 @@ def test_get_dimension_full_requests_dimension_settings(client, queued_pages):
     client.getDimension("dv-1", "page", full=True)
     expansions = set(calls[0][1]["params"]["expansion"].split(","))
     assert DIMENSION_ONLY_EXPANSIONS <= expansions
+
+
+METRIC_SETTING_EXPANSIONS = {"countType", "formatSetting", "attributionSetting"}
+
+
+def test_get_metric_full_requests_metric_settings(client, queued_pages):
+    calls = queued_pages([{"id": "metrics/visits"}])
+    client.getMetric("dv-1", "visits", full=True)
+    expansions = set(calls[0][1]["params"]["expansion"].split(","))
+    assert METRIC_SETTING_EXPANSIONS <= expansions
+
+
+def test_get_metrics_full_requests_metric_settings(client, queued_pages):
+    calls = queued_pages([{"content": [{"id": "metrics/visits"}], "lastPage": True}])
+    client.getMetrics("dv-1", full=True, output="raw")
+    expansions = set(calls[0][1]["params"]["expansion"].split(","))
+    assert METRIC_SETTING_EXPANSIONS <= expansions
+    assert expansions.isdisjoint(DIMENSION_ONLY_EXPANSIONS)

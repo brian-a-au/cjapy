@@ -80,14 +80,19 @@ def test_token_request_uses_the_timeout(monkeypatch):
 
 
 def test_a_slow_server_stops_the_request_at_the_timeout(retry_clock):
+    received = []
+
     class SlowHandler(BaseHTTPRequestHandler):
         def do_GET(self):
+            received.append(self.command)
             time.sleep(1)
             content = json.dumps({"late": True}).encode()
             self.send_response(200)
             self.send_header("Content-Length", str(len(content)))
             self.end_headers()
             self.wfile.write(content)
+
+        do_POST = do_GET
 
         def log_message(self, *args):
             pass
@@ -97,9 +102,12 @@ def test_a_slow_server_stops_the_request_at_the_timeout(retry_clock):
     thread.start()
     try:
         start = time.monotonic()
-        with pytest.raises(requests.exceptions.ConnectionError, match="Read timed out"):
-            make_connector(timeout=0.1).getData(f"http://127.0.0.1:{server.server_port}/resource")
+        with pytest.raises(requests.exceptions.Timeout):
+            make_connector(timeout=0.1).postData(f"http://127.0.0.1:{server.server_port}/resource",
+                                                 data={"name": "test"})
         assert time.monotonic() - start < 1
+        # A read timeout is not retried, so the POST reached the server once.
+        assert received == ["POST"]
     finally:
         server.shutdown()
         server.server_close()
@@ -124,3 +132,9 @@ def test_importConfigFile_reads_the_timeout(sdk, tmp_path):
     sdk.importConfigFile(str(path))
     assert sdk.config_object["timeout"] == [5, 60]
     assert sdk.importConfigFile(str(path), return_object=True).config_object["timeout"] == [5, 60]
+
+
+def test_the_adapter_keeps_its_timeout_after_pickling():
+    import pickle
+    adapter = connector_module.TimeoutHTTPAdapter(timeout=(3, 30))
+    assert pickle.loads(pickle.dumps(adapter)).timeout == (3, 30)

@@ -153,6 +153,8 @@ def configure(
         timeout : OPTIONAL : Seconds to wait for the API, either one number or a (connect, read) pair
             such as (10, 300). In a JSON config file, use a number or a list such as [10, 300].
             Default None, which uses (10, 300): 10 seconds to connect and 300 seconds to read.
+            A request that times out raises requests.exceptions.Timeout and is not sent again.
+            Use (10, None) to wait for the server without a limit, as before.
     """
     if not org_id:
         raise ValueError("`org_id` must be specified in the configuration.")

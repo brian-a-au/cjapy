@@ -44,6 +44,9 @@ include-package-data = true
 include = ["cjapy", "cjapy.*"]
 namespaces = false
 
+[tool.setuptools.package-data]
+cjapy = ["py.typed"]
+
 [tool.setuptools.dynamic]
 version = {attr = "cjapy.__version__.__version__"}
 

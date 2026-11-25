@@ -35,6 +35,7 @@ assert not installed.is_relative_to(Path(sys.argv[2]).resolve()), installed
 metadata = importlib.metadata.distribution("cjapy")
 assert installed == Path(metadata.locate_file("cjapy/__init__.py")).resolve()
 assert cjapy.__version__ == metadata.version == sys.argv[1]
+assert (installed.parent / "py.typed").is_file(), "py.typed marker is missing"
 assert importlib.util.find_spec("pytest") is None, "pytest leaked into the runtime install"
 assert "dynamic" not in metadata.metadata.get_all("Provides-Extra", [])
 assert "test" in metadata.metadata.get_all("Provides-Extra", [])

@@ -120,3 +120,45 @@ def test_cja_raise_on_error_for_get_data_views(cja_factory, retry_clock):
 
     with pytest.raises(CJAAPIError):
         cja.getDataViews()
+
+
+def test_cja_api_error_survives_pickling():
+    import pickle
+    error = CJAAPIError(404, "GET", "https://cja.adobe.io/data/dataviews/dv-1", {"errorCode": "not_found"})
+    copy = pickle.loads(pickle.dumps(error))
+    assert (copy.status_code, copy.method, copy.url, copy.payload) == (
+        404, "GET", "https://cja.adobe.io/data/dataviews/dv-1", {"errorCode": "not_found"})
+    assert str(copy) == str(error)
+
+
+def test_cja_passes_both_proxy_and_raise_on_error_to_the_connector():
+    cja = cjapy.CJA(
+        config_object={"org_id": "test-org", "token": "t", "date_limit": float("inf")},
+        proxy="http://proxy.example:8080",
+        raise_on_error=True,
+    )
+    try:
+        assert cja.connector.raise_on_error is True
+        assert cja.connector.proxies == {"http": "http://proxy.example:8080", "https": "http://proxy.example:8080"}
+        assert cja.connector.session.proxies["https"] == "http://proxy.example:8080"
+    finally:
+        cja.connector.session.close()
+
+
+def test_raise_on_error_keeps_a_non_json_body_as_text(connector_factory, monkeypatch):
+    import requests
+    from requests.adapters import HTTPAdapter
+
+    def send(self, request, **kwargs):
+        response = requests.Response()
+        response.status_code = 502
+        response._content = b"<html>Bad gateway</html>"
+        response.request = request
+        response.url = request.url
+        return response
+
+    monkeypatch.setattr(HTTPAdapter, "send", send)
+    with pytest.raises(CJAAPIError) as excinfo:
+        connector_factory(raise_on_error=True).getData("http://127.0.0.1:1/resource")
+    assert excinfo.value.status_code == 502
+    assert excinfo.value.payload == "<html>Bad gateway</html>"

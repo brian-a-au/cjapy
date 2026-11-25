@@ -22,3 +22,8 @@ class CJAAPIError(Exception):
         self.url = url
         self.payload = payload
         super().__init__(f"{method} {url} returned HTTP {status_code}: {payload!r}"[:1000])
+
+    def __reduce__(self):
+        # Exception pickling passes only the message to __init__, so pass all four values,
+        # e.g., to return the error from a multiprocessing worker.
+        return (self.__class__, (self.status_code, self.method, self.url, self.payload))

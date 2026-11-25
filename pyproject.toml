@@ -48,4 +48,4 @@ namespaces = false
 version = {attr = "cjapy.__version__.__version__"}
 
 [project.optional-dependencies]
-test = ["pytest>=9.0.3"]
+test = ["pytest>=9.0.3,<10"]

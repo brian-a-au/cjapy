@@ -126,6 +126,7 @@ def importConfigFile(
             "secret": client_secret,
             "scopes": ",".join(scopes) if type(scopes) == list else scopes.replace(' ',''),
             "proxy": provided_config.get("proxy"),
+            "timeout": provided_config.get("timeout"),
         }
         if return_object:
             return ConfigObj(**args)
@@ -139,6 +140,7 @@ def configure(
     scopes: str = None,
     return_object: bool = False,
     proxy: str | dict[str, str] | None = None,
+    timeout: float | tuple | list | None = None,
 ) -> Optional["ConfigObj"]:
     """Performs programmatic configuration of the API using provided values.
     Arguments:
@@ -148,6 +150,9 @@ def configure(
         scopes : REQUIRED : The scopes defined in your project for your API connection.
         return_object : OPTIONAL : If True, returns a ConfigObj instance instead of updating the global config. Default False.
         proxy : OPTIONAL : Proxy URL for both HTTP and HTTPS, or a per-protocol mapping.
+        timeout : OPTIONAL : Seconds to wait for the API, either one number or a (connect, read) pair
+            such as (10, 300). In a JSON config file, use a number or a list such as [10, 300].
+            Default None, which uses (10, 300): 10 seconds to connect and 300 seconds to read.
     """
     if not org_id:
         raise ValueError("`org_id` must be specified in the configuration.")
@@ -164,6 +169,7 @@ def configure(
     config_object["secret"] = secret
     config_object["scopes"] = scopes
     config_object["proxy"] = deepcopy(proxy)
+    config_object["timeout"] = deepcopy(timeout)
     config_object["oauthTokenEndpoint"] = f"{config_object['imsEndpoint']}/ims/token/v3"
 
     # ensure the reset of the state by overwriting possible values from previous import.
@@ -176,6 +182,7 @@ def configure(
             secret=secret,
             scopes=scopes,
             proxy=proxy,
+            timeout=timeout,
         )
 
 class ConfigObj:
@@ -196,6 +203,7 @@ class ConfigObj:
         secret: str = "",
         scopes: str = None,
         proxy: str | dict[str, str] | None = None,
+        timeout: float | tuple | list | None = None,
     ) -> None:
         ims_endpoint = "https://ims-na1.adobelogin.com"
         self.config_object: dict = {
@@ -208,6 +216,7 @@ class ConfigObj:
             "imsEndpoint": ims_endpoint,
             "oauthTokenEndpoint": f"{ims_endpoint}/ims/token/v3",
             "proxy": deepcopy(proxy),
+            "timeout": deepcopy(timeout),
         }
         self.header: dict = {
             "Accept": "application/json",

@@ -8,6 +8,7 @@ config_object = {
     "imsEndpoint":"https://ims-na1.adobelogin.com",
     "oauthTokenEndpoint": "",
     "proxy": None,
+    "timeout": None,
 }
 header = {"Accept": "application/json",
           "Content-Type": "application/json",

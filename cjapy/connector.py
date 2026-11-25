@@ -20,6 +20,32 @@ def normalize_proxy(proxy: str | dict[str, str] | None) -> Optional[dict[str, st
     return deepcopy(proxy)
 
 
+# Seconds to wait for a connection, and then for the server to send data.
+DEFAULT_TIMEOUT = (10, 300)
+
+
+def normalize_timeout(timeout: float | tuple | list | None) -> float | tuple:
+    """Return the timeout for requests. None means DEFAULT_TIMEOUT, and a JSON list becomes a tuple."""
+    if timeout is None:
+        return DEFAULT_TIMEOUT
+    if isinstance(timeout, list):
+        return tuple(timeout)
+    return timeout
+
+
+class TimeoutHTTPAdapter(HTTPAdapter):
+    """HTTPAdapter that applies a default timeout to requests sent without one."""
+
+    def __init__(self, *args, timeout: float | tuple = DEFAULT_TIMEOUT, **kwargs) -> None:
+        self.timeout = timeout
+        super().__init__(*args, **kwargs)
+
+    def send(self, request, **kwargs):
+        if kwargs.get("timeout") is None:
+            kwargs["timeout"] = self.timeout
+        return super().send(request, **kwargs)
+
+
 class AdobeRequest:
     """
     Handle request to Audience Manager and taking care that the request have a valid token set each time.
@@ -59,6 +85,7 @@ class AdobeRequest:
         self.proxies = normalize_proxy(proxy) or normalize_proxy(self.config.get("proxy"))
         # OAuth acquisition and refresh must use the same resolved proxy as API calls.
         self.config["proxy"] = self.proxies
+        self.timeout = normalize_timeout(self.config.get("timeout"))
         self.header = deepcopy(header)
         self.loggingEnabled = loggingEnabled
         self.logger = logger
@@ -102,6 +129,7 @@ class AdobeRequest:
             response = requests.post(
                 config["oauthTokenEndpoint"], data=oauth_payload,
                 proxies=normalize_proxy(config.get("proxy")),
+                timeout=normalize_timeout(config.get("timeout")),
             )
             responseJson = response.json()
             token = responseJson.get('access_token')
@@ -117,6 +145,8 @@ class AdobeRequest:
 
         The adapter honours the ``Retry-After`` response header so the wait
         time advertised by the server is respected automatically.
+
+        The adapter also applies ``self.timeout`` to every request that does not set its own.
         """
         session = requests.Session()
         retry_strategy = Retry(
@@ -127,7 +157,7 @@ class AdobeRequest:
             respect_retry_after_header=True,
             raise_on_status=False,
         )
-        adapter = HTTPAdapter(max_retries=retry_strategy)
+        adapter = TimeoutHTTPAdapter(max_retries=retry_strategy, timeout=self.timeout)
         session.mount("https://", adapter)
         session.mount("http://", adapter)
         session.headers.update(self.header)

@@ -1,0 +1,64 @@
+name: Publish to PyPI
+
+# Runs when a GitHub release is published. It builds the sdist and wheel once,
+# checks both the same way as packaging.yml, and uploads them to PyPI.
+#
+# The upload uses PyPI Trusted Publishing, so no API token is stored in GitHub.
+# Before the first release, a PyPI owner of cjapy adds this repository as a
+# trusted publisher on pypi.org, under Manage project, then Publishing:
+#   Owner: pitchmuc   Repository: cjapy   Workflow: publish.yml   Environment: pypi
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install build frontend
+        run: python -m pip install -r requirements-build.txt
+      - name: Build sdist and wheel from sdist
+        run: python -m build
+      - name: Check fresh installs of both distributions
+        run: python scripts/check_distributions.py dist
+      - name: Check that the release tag matches the package version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          version=$(python -c "import ast, pathlib; tree = ast.parse(pathlib.Path('cjapy/__version__.py').read_text()); print(next(ast.literal_eval(n.value) for n in tree.body if isinstance(n, ast.Assign) and any(getattr(t, 'id', None) == '__version__' for t in n.targets)))")
+          if [ "${TAG#v}" != "$version" ]; then
+            echo "The release tag $TAG does not match the package version $version."
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v7
+        with:
+          name: distributions
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: pypi
+      url: https://pypi.org/project/cjapy/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: distributions
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1

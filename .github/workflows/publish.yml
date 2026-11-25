@@ -1,7 +1,8 @@
 name: Publish to PyPI
 
-# Runs when a GitHub release is published. It builds the sdist and wheel once,
-# checks both the same way as packaging.yml, and uploads them to PyPI.
+# Runs when a GitHub release is published, including a pre-release. It checks that
+# the tag matches the package version, builds the sdist and wheel once, checks both
+# the same way as packaging.yml, and uploads them to PyPI.
 #
 # The upload uses PyPI Trusted Publishing, so no API token is stored in GitHub.
 # Before the first release, a PyPI owner of cjapy adds this repository as a
@@ -26,12 +27,6 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
-      - name: Install build frontend
-        run: python -m pip install -r requirements-build.txt
-      - name: Build sdist and wheel from sdist
-        run: python -m build
-      - name: Check fresh installs of both distributions
-        run: python scripts/check_distributions.py dist
       - name: Check that the release tag matches the package version
         env:
           TAG: ${{ github.event.release.tag_name }}
@@ -41,6 +36,12 @@ jobs:
             echo "The release tag $TAG does not match the package version $version."
             exit 1
           fi
+      - name: Install build frontend
+        run: python -m pip install -r requirements-build.txt
+      - name: Build sdist and wheel from sdist
+        run: python -m build
+      - name: Check fresh installs of both distributions
+        run: python scripts/check_distributions.py dist
       - uses: actions/upload-artifact@v7
         with:
           name: distributions
